@@ -1,4 +1,10 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+
+from apps.products.validators.barcode import (
+    validate_ean13,
+    validate_upca,
+)
 
 
 class ProductBarcode(models.Model):
@@ -20,6 +26,22 @@ class ProductBarcode(models.Model):
     )
     is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        super().clean()
+
+        if not self.barcode or not self.barcode.strip():
+            raise ValidationError({"barcode": "Barcode cannot be empty."})
+
+        try:
+            if self.barcode_type == self.BarcodeType.EAN13:
+                validate_ean13(self.barcode)
+
+            elif self.barcode_type == self.BarcodeType.UPC:
+                validate_upca(self.barcode)
+
+        except ValidationError as exc:
+            raise ValidationError({"barcode": exc.messages}) from exc
 
     class Meta:
         ordering = ["-is_primary", "barcode"]

@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models.deletion import ProtectedError
 
@@ -111,3 +112,65 @@ def test_different_products_can_have_primary_barcodes(product):
     )
 
     assert ProductBarcode.objects.filter(is_primary=True).count() == 2
+
+
+@pytest.mark.django_db
+def test_model_accepts_valid_ean13(product):
+    barcode = ProductBarcode(
+        product=product,
+        barcode="4006381333931",
+        barcode_type=ProductBarcode.BarcodeType.EAN13,
+    )
+
+    barcode.full_clean()
+
+
+@pytest.mark.django_db
+def test_model_rejects_invalid_ean13(product):
+    barcode = ProductBarcode(
+        product=product,
+        barcode="4006381333932",
+        barcode_type=ProductBarcode.BarcodeType.EAN13,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        barcode.full_clean()
+
+    assert "barcode" in exc_info.value.message_dict
+
+
+@pytest.mark.django_db
+def test_model_accepts_valid_upca(product):
+    barcode = ProductBarcode(
+        product=product,
+        barcode="036000291452",
+        barcode_type=ProductBarcode.BarcodeType.UPC,
+    )
+
+    barcode.full_clean()
+
+
+@pytest.mark.django_db
+def test_model_rejects_invalid_upca(product):
+    barcode = ProductBarcode(
+        product=product,
+        barcode="036000291453",
+        barcode_type=ProductBarcode.BarcodeType.UPC,
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        barcode.full_clean()
+
+        assert "barcode" in exc_info.value.message_dict
+
+
+@pytest.mark.django_db
+def test_model_rejects_empty_barcode(product):
+    barcode = ProductBarcode(
+        product=product, barcode="   ", barcode_type=ProductBarcode.BarcodeType.OTHER
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        barcode.full_clean()
+
+    assert "barcode" in exc_info.value.message_dict
