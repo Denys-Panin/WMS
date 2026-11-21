@@ -29,7 +29,7 @@ help:
 	@echo "  make t TEST_PATH=path_to_file    Run specific tests"
 	@echo "  make ch                          Run Django system checks"
 	@echo "  make lc                          Check code-quality problems"
-	@echo "  make lf                         Automatically fix supported lint issues"
+	@echo "  make lf                          Automatically fix supported lint issues"
 	@echo "  make fc                          Check formatting without modifying files"
 	@echo "  make f                           Format Python code"
 
